@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={cn('font-sans antialiased', inter.variable)}
+        className={cn('antialiased', inter.variable)}
       >
         <FirebaseClientProvider>
           {children}
