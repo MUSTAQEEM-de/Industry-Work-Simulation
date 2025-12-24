@@ -23,6 +23,8 @@ import { Logo } from '@/components/icons';
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
@@ -51,8 +53,11 @@ export default function SignUpPage() {
       
       // Create a user profile in Firestore
       await setDoc(doc(firestore, 'users', user.uid), {
+        id: user.uid,
+        firstName,
+        lastName,
         email: user.email,
-        createdAt: new Date().toISOString(),
+        registrationDate: new Date().toISOString(),
       });
 
       toast({
@@ -85,6 +90,30 @@ export default function SignUpPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="flex gap-4">
+              <div className="space-y-2 w-1/2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  placeholder="John"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 w-1/2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  placeholder="Doe"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
