@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { getAIFeedback, type FormState, getAIHint, type HintState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Bot, LoaderCircle, Sparkles, RefreshCw, Lightbulb, HelpCircle } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Task } from "@/lib/types";
 import {
@@ -68,10 +68,10 @@ type SimulationFormProps = {
 
 export default function SimulationForm({ task, roleTitle }: SimulationFormProps) {
   const initialFeedbackState: FormState = { success: false };
-  const [feedbackState, feedbackFormAction] = useFormState(getAIFeedback, initialFeedbackState);
+  const [feedbackState, feedbackFormAction] = useActionState(getAIFeedback, initialFeedbackState);
   
   const initialHintState: HintState = { success: false };
-  const [hintState, hintFormAction] = useFormState(getAIHint, initialHintState);
+  const [hintState, hintFormAction] = useActionState(getAIHint, initialHintState);
 
   const { toast } = useToast();
   const feedbackFormRef = useRef<HTMLFormElement>(null);
