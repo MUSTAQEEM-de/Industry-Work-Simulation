@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { getAIFeedback, type FormState } from "./actions";
+import { getAIFeedback, type FormState, getAIHint, type HintState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -11,10 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Bot, LoaderCircle, Sparkles, RefreshCw } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Bot, LoaderCircle, Sparkles, RefreshCw, Lightbulb, HelpCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Task, Role } from "@/lib/types";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -35,31 +40,69 @@ function SubmitButton() {
   );
 }
 
+function HintSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending} size="sm">
+      {pending ? (
+        <>
+          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+          Getting Hint...
+        </>
+      ) : (
+        <>
+          <Lightbulb className="mr-2 h-4 w-4" />
+          Get Hint
+        </>
+      )}
+    </Button>
+  );
+}
+
+
 type SimulationFormProps = {
   task: Task;
   role: Role;
 };
 
 export default function SimulationForm({ task, role }: SimulationFormProps) {
-  const initialState: FormState = { success: false };
-  const [state, formAction] = useFormState(getAIFeedback, initialState);
+  const initialFeedbackState: FormState = { success: false };
+  const [feedbackState, feedbackFormAction] = useFormState(getAIFeedback, initialFeedbackState);
+  
+  const initialHintState: HintState = { success: false };
+  const [hintState, hintFormAction] = useFormState(getAIHint, initialHintState);
+
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
+  const feedbackFormRef = useRef<HTMLFormElement>(null);
+  const hintFormRef = useRef<HTMLFormElement>(null);
+  const [showHintArea, setShowHintArea] = useState(false);
 
   useEffect(() => {
-    if (!state.success && state.error) {
+    if (!feedbackState.success && feedbackState.error) {
       toast({
         variant: "destructive",
         title: "Submission Error",
-        description: state.error,
+        description: feedbackState.error,
       });
     }
-  }, [state, toast]);
+  }, [feedbackState, toast]);
+
+  useEffect(() => {
+    if (!hintState.success && hintState.error) {
+      toast({
+        variant: "destructive",
+        title: "Hint Error",
+        description: hintState.error,
+      });
+    }
+    if (hintState.success && hintState.hint) {
+      hintFormRef.current?.reset();
+    }
+  }, [hintState, toast]);
 
   const handleReset = () => {
-    formRef.current?.reset();
-    // A bit of a trick to reset the form state
-    formAction(new FormData());
+    feedbackFormRef.current?.reset();
+    feedbackFormAction(new FormData());
   };
 
   return (
@@ -72,7 +115,7 @@ export default function SimulationForm({ task, role }: SimulationFormProps) {
             <CardDescription className="pt-2">{task.task}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form ref={formRef} action={formAction}>
+            <form ref={feedbackFormRef} action={feedbackFormAction}>
               <input type="hidden" name="taskDescription" value={task.task} />
               <input type="hidden" name="role" value={role.title} />
               <Textarea
@@ -80,33 +123,74 @@ export default function SimulationForm({ task, role }: SimulationFormProps) {
                 placeholder={`Enter your response for the ${role.title} task here...`}
                 rows={15}
                 className="mb-4"
-                disabled={state.success}
+                disabled={feedbackState.success}
               />
-              {!state.success && <SubmitButton />}
+              {!feedbackState.success && <SubmitButton />}
             </form>
           </CardContent>
         </Card>
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">AI Mentor Feedback</h2>
+        <h2 className="text-xl font-semibold mb-4">AI Mentor</h2>
+        <Collapsible className="mb-4">
+          <CollapsibleTrigger asChild>
+             <Button variant="outline" onClick={() => setShowHintArea(!showHintArea)}>
+              <HelpCircle className="mr-2 h-4 w-4" />
+              {showHintArea ? 'Close Live Assistance' : 'Need a hint? Ask our AI Mentor!'}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <Card className="mt-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Lightbulb className="text-accent" />
+                  Live Assistance
+                </CardTitle>
+                 <CardDescription>
+                  Stuck? Ask a question and get a hint from your AI mentor.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={hintFormAction} ref={hintFormRef} className="space-y-4">
+                  <input type="hidden" name="taskDescription" value={task.task} />
+                  <Textarea
+                    name="userQuestion"
+                    placeholder="e.g., 'Where should I start?' or 'What's the best way to handle error cases?'"
+                    rows={3}
+                  />
+                  <HintSubmitButton />
+                </form>
+                {hintState.success && hintState.hint && (
+                  <div className="mt-4">
+                    <h3 className="font-semibold mb-2">Hint:</h3>
+                    <div className="prose prose-sm dark:prose-invert max-w-none p-4 bg-secondary/50 rounded-md">
+                      {hintState.hint}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </CollapsibleContent>
+        </Collapsible>
+        
         <Card className="min-h-[400px]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="text-accent" />
-              Feedback
+              Submission Feedback
             </CardTitle>
             <CardDescription>
-              {state.success
+              {feedbackState.success
                 ? "Here is your personalized feedback."
                 : "Submit your work to receive feedback from your AI mentor."}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {state.success && state.feedback ? (
+            {feedbackState.success && feedbackState.feedback ? (
               <>
                 <div className="prose prose-sm dark:prose-invert max-w-none p-4 bg-secondary/50 rounded-md whitespace-pre-wrap">
-                  {state.feedback}
+                  {feedbackState.feedback}
                 </div>
                  <Button onClick={handleReset} variant="outline" className="mt-4">
                   <RefreshCw className="mr-2 h-4 w-4" />
