@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Matches any document in the 'users' collection.
+    match /users/{userId} {
+      // Anyone can read a user's public profile.
+      allow read;
+      // A user can create their own profile.
+      allow create: if isSignedIn() && isOwner(userId);
+      // A user can update their own profile.
+      allow update: if isSignedIn() && isOwner(userId);
+      // A user can delete their own profile.
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+  }
+}

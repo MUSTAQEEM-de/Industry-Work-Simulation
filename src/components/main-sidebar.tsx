@@ -11,10 +11,12 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { History, LayoutDashboard } from "lucide-react";
+import { History, LayoutDashboard, LogOut } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "./icons";
 import { Button } from "./ui/button";
+import { useAuth } from "@/firebase";
+import { getAuth, signOut } from "firebase/auth";
 
 const menuItems = [
   {
@@ -31,6 +33,13 @@ const menuItems = [
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const auth = useAuth();
+
+  const handleSignOut = () => {
+    if (auth) {
+      signOut(auth);
+    }
+  };
 
   return (
     <Sidebar>
@@ -61,6 +70,18 @@ export function MainSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </SidebarMenuItem>
+        </SidebarMenu>
         <SidebarTrigger className="text-sidebar-foreground" />
       </SidebarFooter>
     </Sidebar>
