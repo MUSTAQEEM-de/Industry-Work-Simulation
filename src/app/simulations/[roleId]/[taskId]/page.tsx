@@ -1,3 +1,4 @@
+
 import { getRole, getTask } from "@/lib/data";
 import { notFound } from "next/navigation";
 import SimulationForm from "./simulation-form";
@@ -38,7 +39,7 @@ export default function SimulationTaskPage({ params }: SimulationTaskPageProps) 
         </div>
       </header>
 
-      <SimulationForm task={task} role={role} />
+      <SimulationForm task={task} roleTitle={role.title} />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
@@ -14,7 +15,7 @@ import {
 import { Bot, LoaderCircle, Sparkles, RefreshCw, Lightbulb, HelpCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import type { Task, Role } from "@/lib/types";
+import type { Task } from "@/lib/types";
 import {
   Collapsible,
   CollapsibleContent,
@@ -62,10 +63,10 @@ function HintSubmitButton() {
 
 type SimulationFormProps = {
   task: Task;
-  role: Role;
+  roleTitle: string;
 };
 
-export default function SimulationForm({ task, role }: SimulationFormProps) {
+export default function SimulationForm({ task, roleTitle }: SimulationFormProps) {
   const initialFeedbackState: FormState = { success: false };
   const [feedbackState, feedbackFormAction] = useFormState(getAIFeedback, initialFeedbackState);
   
@@ -102,7 +103,12 @@ export default function SimulationForm({ task, role }: SimulationFormProps) {
 
   const handleReset = () => {
     feedbackFormRef.current?.reset();
-    feedbackFormAction(new FormData());
+    // This is not a standard way to reset useFormState. A better approach might be needed
+    // if we need to clear the feedback from the UI upon reset.
+    // For now, we just reset the form inputs.
+    const newFormData = new FormData();
+    feedbackFormAction(newFormData);
+    hintFormAction(new FormData());
   };
 
   return (
@@ -117,10 +123,10 @@ export default function SimulationForm({ task, role }: SimulationFormProps) {
           <CardContent>
             <form ref={feedbackFormRef} action={feedbackFormAction}>
               <input type="hidden" name="taskDescription" value={task.task} />
-              <input type="hidden" name="role" value={role.title} />
+              <input type="hidden" name="role" value={roleTitle} />
               <Textarea
                 name="submissionText"
-                placeholder={`Enter your response for the ${role.title} task here...`}
+                placeholder={`Enter your response for the ${roleTitle} task here...`}
                 rows={15}
                 className="mb-4"
                 disabled={feedbackState.success}
