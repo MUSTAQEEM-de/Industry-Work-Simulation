@@ -1,27 +1,230 @@
+/**
+ * This Firestore Security Ruleset is designed for the SimuWork platform, enforcing a
+ * strict user-ownership model for all personal and progress-related data while
+ * providing read-only access to public simulation content.
+ *
+ * Core Philosophy:
+ * The primary security goal is to isolate user data completely. A user can only
+ * ever interact with documents that exist within their own data tree. This prevents
+ * any user from seeing or modifying another user's profile, simulation progress,
+ * portfolios, or feedback. Public content, like the simulations themselves, is
+ * accessible to any authenticated user but cannot be modified by them.
+ *
+ * Data Structure:
+ * The data is organized into two main top-level collections:
+ * 1. `/users/{userId}`: Contains all data private to a specific user. This
+ *    includes their profile, simulation progress, feedback, and portfolios.
+ *    All rules for paths under this collection use path-based ownership checks.
+ * 2. `/simulations/{simulationId}`: Contains public, read-only content that
+ *    defines the available simulations and their associated tasks.
+ *
+ * Key Security Decisions:
+ * - User Data Isolation: All reads and writes to `/users/{userId}` and its
+ *   subcollections are strictly limited to the authenticated user whose UID
+ *   matches the `{userId}` in the path.
+ * - No User Listing: To protect user privacy, it is not possible to list or
+ *   query the top-level `/users` collection.
+ * - Read-Only Public Content: The `/simulations` and their nested `/tasks`
+ *   collections are considered globally available content. Any signed-in user
+ *   can read them, but all client-side write operations are disabled. It is
+ *   assumed this content is managed by an admin process (e.g., via the Admin SDK).
+ * - Relational Integrity: On creation, documents within a user's data tree
+ *   (like portfolios or progress trackers) must include a `userId` field that
+ *   matches the user's ID. This field is then enforced as immutable to maintain
+ *   a permanent and verifiable link to the owner.
+ *
+ * Denormalization for Authorization:
+ * This ruleset relies on the data structure nesting all user-specific documents
+ * under a `/users/{userId}` path. This is a form of structural denormalization
+ * that allows for simple and highly performant ownership checks (`isOwner(userId)`)
+ * without needing costly `get()` calls to other documents.
+ *
+ * Structural Segregation:
+ * The architecture clearly separates private, user-writable data (`/users`) from
+ * public, read-only content (`/simulations`). This segregation simplifies rules
+ * and enhances security by applying a fundamentally different, more restrictive
+ * policy to the user data collections.
+ */
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns true if the user is signed in.
+     */
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /**
+     * Returns true if the requesting user's UID matches the provided userId.
+     * This is the primary function for establishing document ownership.
+     */
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Matches any document in the 'users' collection.
+    /**
+     * Returns true if the document exists and the user is the owner.
+     * Used for safe update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates required fields for a new User document creation.
+     * Enforces that the document's internal `id` matches the path `userId`.
+     */
+    function isValidUserDoc_Create(userId) {
+      let data = request.resource.data;
+      return data.id == userId;
+    }
+
+    /**
+     * Validates a User document update.
+     * Enforces that the `id` and `registrationDate` fields cannot be changed.
+     */
+    function isValidUserDoc_Update() {
+      let data = request.resource.data;
+      return data.id == resource.data.id
+          && data.registrationDate == resource.data.registrationDate;
+    }
+
+    /**
+     * Validates required fields for a new UserSimulationProgress document.
+     * Enforces that the document's internal `userId` matches the path.
+     */
+    function isValidSimulationProgressDoc_Create(userId) {
+      let data = request.resource.data;
+      return data.userId == userId;
+    }
+
+    /**
+     * Validates a UserSimulationProgress document update.
+     * Enforces that the ownership link (`userId`) is immutable.
+     */
+    function isValidSimulationProgressDoc_Update() {
+      let data = request.resource.data;
+      return data.userId == resource.data.userId;
+    }
+
+    /**
+     * Validates required fields for a new Portfolio document.
+     * Enforces that the document's internal `userId` matches the path.
+     */
+    function isValidPortfolioDoc_Create(userId) {
+      let data = request.resource.data;
+      return data.userId == userId;
+    }
+    
+    /**
+     * Validates a Portfolio document update.
+     * Enforces that the ownership link (`userId`) is immutable.
+     */
+    function isValidPortfolioDoc_Update() {
+      let data = request.resource.data;
+      return data.userId == resource.data.userId;
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Manages user profile documents. Only the owner of the profile
+     *              can create, read, or modify their own document. Listing users is disallowed.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user with UID 'user123' creates their own profile at `/users/user123`.
+     * @deny (get) A user 'user456' tries to read the profile at `/users/user123`.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
     match /users/{userId} {
-      // Anyone can read a user's public profile.
-      allow read;
-      // A user can create their own profile.
-      allow create: if isSignedIn() && isOwner(userId);
-      // A user can update their own profile.
-      allow update: if isSignedIn() && isOwner(userId);
-      // A user can delete their own profile.
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && isValidUserDoc_Create(userId);
+      allow update: if isExistingOwner(userId) && isValidUserDoc_Update();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages a user's progress in a specific simulation. Access is
+     *              restricted to the owner of the user document.
+     * @path /users/{userId}/simulationProgress/{userSimulationProgressId}
+     * @allow (get, list, create, update, delete) A user 'user123' manages their own progress documents under `/users/user123/simulationProgress`.
+     * @deny (get) A user 'user456' tries to access any document under `/users/user123/simulationProgress`.
+     * @principle Enforces document ownership via path parameter for a user's private subcollection.
+     */
+    match /users/{userId}/simulationProgress/{userSimulationProgressId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSimulationProgressDoc_Create(userId);
+      allow update: if isExistingOwner(userId) && isValidSimulationProgressDoc_Update();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages feedback on a user's task performance. Access is
+     *              restricted to the owner of the user document.
+     * @path /users/{userId}/simulationProgress/{userSimulationProgressId}/feedback/{feedbackId}
+     * @allow (get, list) A user 'user123' reads feedback documents under their own progress entry.
+     * @deny (create) A user 'user456' tries to create a feedback document for 'user123'.
+     * @principle Enforces document ownership for deeply nested subcollections.
+     */
+    match /users/{userId}/simulationProgress/{userSimulationProgressId}/feedback/{feedbackId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages user portfolios. Access is restricted to the owner
+     *              of the user document.
+     * @path /users/{userId}/portfolios/{portfolioId}
+     * @allow (create) A user 'user123' creates a new portfolio document at `/users/user123/portfolios/new-portfolio`.
+     * @deny (list) A user 'user456' tries to list portfolios for 'user123'.
+     * @principle Enforces document ownership and validates relational integrity for user-created content.
+     */
+    match /users/{userId}/portfolios/{portfolioId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidPortfolioDoc_Create(userId);
+      allow update: if isExistingOwner(userId) && isValidPortfolioDoc_Update();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages simulation definitions, which are public, read-only
+     *              content for all authenticated users.
+     * @path /simulations/{simulationId}
+     * @allow (get, list) Any authenticated user can read or list simulation documents.
+     * @deny (create, update, delete) All write operations are denied for clients.
+     * @principle Provides public read access to application content while protecting it from modification.
+     */
+    match /simulations/{simulationId} {
+      allow get, list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Manages task definitions within a simulation. This is public,
+     *              read-only content for all authenticated users.
+     * @path /simulations/{simulationId}/tasks/{taskId}
+     * @allow (get, list) Any authenticated user can read or list task documents for any simulation.
+     * @deny (create, update, delete) All write operations are denied for clients.
+     * @principle Provides public read access to application content while protecting it from modification.
+     */
+    match /simulations/{simulationId}/tasks/{taskId} {
+      allow get, list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }

@@ -1,33 +1,357 @@
 {
   "entities": {
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "Represents a user's profile in the system.",
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
       "type": "object",
+      "description": "Represents a user of the SimuWork platform.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
         "email": {
           "type": "string",
-          "format": "email",
-          "description": "The user's email address."
+          "description": "The email address of the user.",
+          "format": "email"
         },
-        "createdAt": {
+        "registrationDate": {
           "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the user profile was created."
+          "description": "The date and time when the user registered.",
+          "format": "date-time"
         }
       },
-      "required": ["email", "createdAt"]
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "registrationDate"
+      ]
+    },
+    "Simulation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Simulation",
+      "type": "object",
+      "description": "Represents a role-based simulation available on the platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Simulation entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the simulation."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the simulation."
+        },
+        "industry": {
+          "type": "string",
+          "description": "The industry the simulation relates to."
+        },
+        "role": {
+          "type": "string",
+          "description": "The specific role the simulation focuses on."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "industry",
+        "role"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a specific task within a simulation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "simulationId": {
+          "type": "string",
+          "description": "Reference to Simulation. (Relationship: Simulation 1:N Task)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the task."
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Specific instructions for completing the task."
+        }
+      },
+      "required": [
+        "id",
+        "simulationId",
+        "title",
+        "description",
+        "instructions"
+      ]
+    },
+    "UserSimulationProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserSimulationProgress",
+      "type": "object",
+      "description": "Tracks a user's progress in a specific simulation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserSimulationProgress entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserSimulationProgress)"
+        },
+        "simulationId": {
+          "type": "string",
+          "description": "Reference to Simulation. (Relationship: Simulation 1:N UserSimulationProgress)"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The date and time when the user started the simulation.",
+          "format": "date-time"
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "The date and time when the user completed the simulation.  Null if not completed.",
+          "format": "date-time"
+        },
+        "score": {
+          "type": "number",
+          "description": "The user's score in the simulation."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "simulationId",
+        "startDate"
+      ]
+    },
+    "Feedback": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Feedback",
+      "type": "object",
+      "description": "Represents feedback given to a user on a specific task.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Feedback entity."
+        },
+        "userSimulationProgressId": {
+          "type": "string",
+          "description": "Reference to UserSimulationProgress. (Relationship: UserSimulationProgress 1:N Feedback)"
+        },
+        "taskId": {
+          "type": "string",
+          "description": "Reference to Task. (Relationship: Task 1:N Feedback)"
+        },
+        "feedbackText": {
+          "type": "string",
+          "description": "The actual feedback text."
+        },
+        "feedbackDate": {
+          "type": "string",
+          "description": "The date and time when the feedback was given.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userSimulationProgressId",
+        "taskId",
+        "feedbackText",
+        "feedbackDate"
+      ]
+    },
+    "Portfolio": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Portfolio",
+      "type": "object",
+      "description": "Represents a user's portfolio of completed simulations and tasks.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Portfolio entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Portfolio)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the portfolio."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the portfolio."
+        },
+        "creationDate": {
+          "type": "string",
+          "description": "The date and time when the portfolio was created.",
+          "format": "date-time"
+        },
+        "simulationIds": {
+          "type": "array",
+          "description": "References to Simulations included in the portfolio. (Relationship: Simulation N:N Portfolio)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "description",
+        "creationDate"
+      ]
     }
   },
   "auth": {
-    "providers": ["email-password"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/UserProfile"
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile data. Path-based ownership ensures that only the user can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
       },
-      "description": "Stores public profile information for each user."
-    }
+      {
+        "path": "/simulations/{simulationId}",
+        "definition": {
+          "entityName": "Simulation",
+          "schema": {
+            "$ref": "#/backend/entities/Simulation"
+          },
+          "description": "Stores simulation definitions.",
+          "params": [
+            {
+              "name": "simulationId",
+              "description": "The unique identifier of the simulation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/simulations/{simulationId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Stores tasks associated with a simulation. ",
+          "params": [
+            {
+              "name": "simulationId",
+              "description": "The unique identifier of the simulation."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique identifier of the task."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/simulationProgress/{userSimulationProgressId}",
+        "definition": {
+          "entityName": "UserSimulationProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserSimulationProgress"
+          },
+          "description": "Tracks a user's progress in a specific simulation. Path-based ownership ensures only the user can access their progress.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "userSimulationProgressId",
+              "description": "The unique identifier for user simulation progress."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/simulationProgress/{userSimulationProgressId}/feedback/{feedbackId}",
+        "definition": {
+          "entityName": "Feedback",
+          "schema": {
+            "$ref": "#/backend/entities/Feedback"
+          },
+          "description": "Stores feedback for a user's progress on a specific task within a simulation. Path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "userSimulationProgressId",
+              "description": "The unique identifier for user simulation progress."
+            },
+            {
+              "name": "feedbackId",
+              "description": "The unique identifier for feedback."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/portfolios/{portfolioId}",
+        "definition": {
+          "entityName": "Portfolio",
+          "schema": {
+            "$ref": "#/backend/entities/Portfolio"
+          },
+          "description": "Stores user portfolios. Path-based ownership ensures that only the user can access their own portfolio.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "portfolioId",
+              "description": "The unique identifier for the portfolio."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the SimuWork platform, focusing on role-based simulations and task management. It prioritizes Authorization Independence, structural segregation and data clarity to facilitate easy and secure data access. User data is stored in a dedicated collection `/users/{userId}`. Simulations are stored in a top-level collection `/simulations/{simulationId}` and Tasks are stored in a subcollection `/simulations/{simulationId}/tasks/{taskId}` to efficiently query related tasks to a given simulation. User simulation progress is tracked using `/users/{userId}/simulationProgress/{userSimulationProgressId}` to allow quick access to simulation progress for a user. Feedback associated with user simulation progress is located at `/users/{userId}/simulationProgress/{userSimulationProgressId}/feedback/{feedbackId}` to ensure the feedbacks can only be accessed by the given user. User portfolios are located at `/users/{userId}/portfolios/{portfolioId}` for easy access. The structure adheres to Authorization Independence by storing authorization-related data directly within the relevant documents, eliminating the need for complex `get()` calls in security rules. QAPs are supported through path-based ownership for user-specific data and structural segregation to manage access control effectively. Data clarity is enhanced through explicit state modeling (e.g., using a `status` field) and predictable schema."
   }
 }
