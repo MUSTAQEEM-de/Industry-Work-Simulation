@@ -10,8 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        sans: ['var(--font-sans)', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -85,7 +84,7 @@ export default {
             height: 'var(--radix-accordion-content-height)',
           },
           to: {
-            height: '0',
+            height: 'var(--radix-accordion-content-height)',
           },
         },
       },

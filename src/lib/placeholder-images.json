@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "software-engineer",
+      "description": "A focused software engineer coding at their desk.",
+      "imageUrl": "https://images.unsplash.com/photo-1667984436031-ea1d9ff307ec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxkZXZlbG9wZXIlMjBjb2RlfGVufDB8fHx8MTc2NjQ4MTI2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "developer code"
+    },
+    {
+      "id": "ux-designer",
+      "description": "A UX designer sketching wireframes and user flows.",
+      "imageUrl": "https://images.unsplash.com/photo-1581291518570-03a26006fb21?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxkZXNpZ25lciUyMHdpcmVmcmFtZXxlbnwwfHx8fDE3NjY1NTIzMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "designer wireframe"
+    },
+    {
+      "id": "product-manager",
+      "description": "A product manager leading a brainstorming session with sticky notes.",
+      "imageUrl": "https://images.unsplash.com/photo-1709715357549-f2d587846ee1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtZWV0aW5nJTIwc3RyYXRlZ3l8ZW58MHx8fHwxNzY2NTUyMzE3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "meeting strategy"
+    },
+    {
+      "id": "data-analyst",
+      "description": "A data analyst reviewing charts and graphs on multiple monitors.",
+      "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbmFseXRpY3MlMjBkYXNoYm9hcmR8ZW58MHx8fHwxNzY2NTEzNzM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "analytics dashboard"
+    },
+    {
+      "id": "digital-marketer",
+      "description": "A digital marketer planning a campaign on a whiteboard.",
+      "imageUrl": "https://images.unsplash.com/photo-1547621008-d6d6d2e28e81?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtYXJrZXRpbmclMjBzb2NpYWx8ZW58MHx8fHwxNzY2NTM2NTIxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "marketing social"
+    }
+  ]
 }
